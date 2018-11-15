@@ -1,0 +1,8 @@
+[package]
+name = "matta_bc"
+version = "0.1.0"
+authors = ["jmatta697 <jmatta1980@hotmail.com>"]
+edition = "2018"
+
+[dependencies]
+regex = "1.0.6"
