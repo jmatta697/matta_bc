@@ -1,30 +1,38 @@
 use std::env;
-
+use std::collections::HashMap;
 
 
 fn main() {
-    check_for_command_line_args()
+    // hash map will hold all variables and their values
+    let mut variable_map:HashMap<String, String> = HashMap::new();
+    // program control - also gets command line arg
+    let mut command_line_arg = get_command_line_args();
+
+    // replace variable declarations with value strings
+
 }
 
 // ------------------------------------------------------------
 
 /// determines amount of command line arguments passed to program call
-fn check_for_command_line_args() {
+fn get_command_line_args() -> String {
     let command_line_args: Vec<_> = env::args().collect();
 
     if command_line_args.len() == 1 {
-        println!("no command line args where passed, run regular program")
-        // run regular program here
+        println!("no command line args where passed, run regular program");
+        return "".to_string()
     }
     else if command_line_args.len() == 2 {
         println!("a command line argument was passed, evaluate, print answer, and exit program");
-        let incoming_arg: &str = &command_line_args[1];
-        let incoming_arg_string: String = String::from(incoming_arg);
+        return command_line_args[1].to_owned();
 
-        match string_has_comparison(incoming_arg_string) {
-            true => return,
-            false => println!("{}", evaluate_clean_expression(incoming_arg)),
-        };
+//        let incoming_arg: &str = &command_line_args[1];
+//        let incoming_arg_string: String = String::from(incoming_arg);
+//
+//        match string_has_comparison(incoming_arg_string.to_owned()) {
+//            true => println!("{}", handle_comparison_expression(incoming_arg_string.to_owned())),
+//            false => println!("{}", evaluate_clean_expression(incoming_arg)),
+//        };
 
         // run alternate program here
         // if "--help" is passed:
@@ -32,11 +40,10 @@ fn check_for_command_line_args() {
         // else:
         // check expression and evaluate, then exit()
     }
-    else {
-        println!("{}{}", "Number of arguments passed: ",  command_line_args.len()-1);
-        println!("Too many command line arguments! Enter one argument or none. Exiting program...");
-        // simply exit program after giving error message
-    }
+    println!("{}{}", "Number of arguments passed: ",  command_line_args.len()-1);
+    println!("Too many command line arguments! Enter one argument or none. Exiting program...");
+    // simply exit program after giving error message
+    return "-1".to_string()
 }
 
 // --------------- Utility Functions ------------------------------------------
@@ -198,43 +205,26 @@ fn test_extract_comparison_notation() {
     assert_eq!("".to_string(), extract_comparison_notation("2345".to_string()));
 }
 
-// ------------------ Comparison Evaluation Algorithm -------------------------
-fn evaluate_comparison_expression(expressions_vec: Vec<&str>, comparison_notation: String) -> i32 {
-    let value_of_exp0 = evaluate_clean_expression(&expressions_vec[0]);
-    let value_of_exp1 = evaluate_clean_expression(&expressions_vec[1]);
 
-    let mut comparison_valid = false;
+///*************
+fn handle_comparison_expression(string_expression: String) -> i32 {
+    let operation = extract_comparison_notation(string_expression.to_owned());
+    let comparison_operands_vec = split_comparison_string(string_expression.to_owned());
+    // make vec of &str for string elements
+    let str_comparison_operands_vec = vec![&*comparison_operands_vec[0], &*comparison_operands_vec[1]];
 
-    if comparison_notation == "==".to_string() {comparison_valid = value_of_exp0 == value_of_exp1}
-    else if comparison_notation == ">=".to_string() {comparison_valid = value_of_exp0 >= value_of_exp1}
-    else if comparison_notation == "<=".to_string() {comparison_valid = value_of_exp0 <= value_of_exp1}
-    else if comparison_notation == ">".to_string() {comparison_valid = value_of_exp0 > value_of_exp1}
-    else if comparison_notation == "<".to_string() {comparison_valid = value_of_exp0 < value_of_exp1}
-
-    match comparison_valid {
-        true => return 1,
-        false => return 0,
-    }
+    return evaluate_comparison_expression(str_comparison_operands_vec, operation)
 }
 
 #[test]
-fn test_evaluate_comparison_expression() {
-    // vec = [20, 20]
-    let vec0 = vec!["(((32+6)+2*5)-8)/2", "20"];
-    let vec1 = vec!["(((32+6)+2*5)-8)/2", "20"];
-    let vec2 = vec!["(((32+6)+2*5)-8)/2", "20"];
-    let vec3 = vec!["(((32+6)+2*5)-8)/2", "0"];
-    let vec4 = vec!["(((32+6)+2*5)-8)/2", "21"];
-
-    assert_eq!(1, evaluate_comparison_expression(vec0, String::from("==")));
-    assert_eq!(0, evaluate_comparison_expression(vec1, String::from("<")));
-    assert_eq!(0, evaluate_comparison_expression(vec2, String::from(">")));
-    assert_eq!(0, evaluate_comparison_expression(vec3, String::from("<=")));
-    assert_eq!(0, evaluate_comparison_expression(vec4, String::from(">=")));
+fn test_handle_comparison_expression() {
+    assert_eq!(1, handle_comparison_expression("3==3".to_string()));
+    assert_eq!(0, handle_comparison_expression("3<3".to_string()));
+    assert_eq!(0, handle_comparison_expression("(3+3)/2>3".to_string()));
+    assert_eq!(1, handle_comparison_expression("(((32+6)+2*5)-8)/2<=21".to_string()));
+    assert_eq!(0, handle_comparison_expression("34==(4+1)*2".to_string()));
+    assert_eq!(1, handle_comparison_expression("3>=3".to_string()));
 }
-
-///*************
-fn handle_comparison_expression()
 
 
 // ------------------ Expression Evaluation Algorithm -------------------------
@@ -332,3 +322,62 @@ fn test_evaluate_clean_expression() {
 }
 
 // --------------- END Expression Evaluation Algorithm --------------------
+
+// ------------------ Comparison Evaluation Algorithm ---------------------
+
+fn evaluate_comparison_expression(expressions_vec: Vec<&str>, comparison_notation: String) -> i32 {
+    let value_of_exp0 = evaluate_clean_expression(&expressions_vec[0]);
+    let value_of_exp1 = evaluate_clean_expression(&expressions_vec[1]);
+
+    let mut comparison_valid = false;
+
+    if comparison_notation == "==".to_string() {comparison_valid = value_of_exp0 == value_of_exp1}
+    else if comparison_notation == ">=".to_string() {comparison_valid = value_of_exp0 >= value_of_exp1}
+    else if comparison_notation == "<=".to_string() {comparison_valid = value_of_exp0 <= value_of_exp1}
+    else if comparison_notation == ">".to_string() {comparison_valid = value_of_exp0 > value_of_exp1}
+    else if comparison_notation == "<".to_string() {comparison_valid = value_of_exp0 < value_of_exp1}
+
+    match comparison_valid {
+        true => return 1,
+        false => return 0,
+    }
+}
+
+#[test]
+fn test_evaluate_comparison_expression() {
+    // vec = [20, 20]
+    let vec0 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec1 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec2 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec3 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec4 = vec!["(((32+6)+2*5)-8)/2", "21"];
+
+    assert_eq!(1, evaluate_comparison_expression(vec0, String::from("==")));
+    assert_eq!(0, evaluate_comparison_expression(vec1, String::from("<")));
+    assert_eq!(0, evaluate_comparison_expression(vec2, String::from(">")));
+    assert_eq!(1, evaluate_comparison_expression(vec3, String::from("<=")));
+    assert_eq!(0, evaluate_comparison_expression(vec4, String::from(">=")));
+}
+
+// ------------------------------------------------
+
+/// function that replaces all variable declarations with appropriate value in hashmap
+/// if no such variable exists in map, create one and assign value to zero
+fn replace_variable_references_with_value_strings(expression_str: String,
+                                                  variable_map: HashMap<String, String>) -> String {
+    // put all characters in expr string into vector
+    let mut expression_vec = expression_string_to_char_vector(&expression_str);
+    // establish iterator for string
+    let mut vector_iterator = expression_vec.iter().peekable();
+
+    let mut temp_str = "".to_string();
+
+    while let Some(token) = vector_iterator.next() {
+        if token.is_ascii_lowercase() {
+            temp_str.push(*token);
+            //if vector_iterator.peek() != None && vector_iterator.peek().unwrap() //******
+        }
+    }
+
+    return "".to_string()
+}
