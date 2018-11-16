@@ -22,4 +22,5 @@ source for evaluation algorithm:
 https://www.geeksforgeeks.org/expression-evaluation/
 
 notes:
-multiple digit numbers cannot have spaces between digits (ex. 32 cannot be expressed as 3 2)
+-multiple digit numbers cannot have spaces between digits (ex. 32 cannot be expressed as 3 2)
+-multiplication cant be done by (2)(3) or 2(3), must be (2)*(3) or 2*(3).
