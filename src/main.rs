@@ -11,20 +11,56 @@ fn main() {
     let command_line_arg = get_command_line_args();
 
     if command_line_arg.trim() == "-1" {
-        println!("{}{}", "Number of arguments passed: ",  command_line_arg.len()-1);
-        println!("Too many command line arguments! Enter one argument or none. Exiting program...");
+        println!("\nToo many command line arguments! Enter one argument or none. Exiting program...\n");
     }
     else if command_line_arg.trim() == "" {
         main_user_input_loop(variable_map);
     }
     else {
-
+        main_one_time_eval(command_line_arg, variable_map);
     }
 }
 
-/// this function processes the one-time evaluation when program is called with a command line arg
-fn main_one_time_eval(command_line_arg: String) {
+// -----------------------------------------------------------------------------------------------
 
+/// this function processes the one-time evaluation when program is called with a command line arg
+fn main_one_time_eval(command_line_arg: String, varib_map: &mut HashMap<String, String>) {
+    // clean all white space from string and any trailing or heading escape chars
+    let clean_white_space_str = remove_all_white_space_from_string(command_line_arg.trim());
+
+    // ***CHECK FOR VALID INPUT HERE!!****
+        // if not valid - print error message
+        // process::exit(1)
+
+    // check explicit division by 0
+    if clean_white_space_str.contains("/0") {
+        println!("{}", "You divided by 0! Enter a valid expression..");
+    }
+    // replace variables with values - (will always be zero in the case of passing command line arg)
+    // replace all variable declarations with appropriate values ** this is the clean string
+    let variables_replaced_str = replace_variable_references_with_value_strings(
+        clean_white_space_str.to_owned(), varib_map);
+    // check explicit division by 0 after replacing variable values...
+    if variables_replaced_str.contains("/0") {
+        println!("{}", "You divided by 0! Enter a valid expression..");
+    }
+    // check if expression has comparison
+    let is_comparison = string_has_comparison(clean_white_space_str.to_owned());
+    // if input string is a comparison, evaluate comparison..
+    if clean_white_space_str.chars().nth(0).unwrap().is_ascii_lowercase() &&
+        is_a_variable_assignment(&clean_white_space_str) && !is_comparison {
+        println!("{}", "\nVariable not stored! Variables cannot be assigned as a command line argument.\n");
+    }
+    else if is_comparison {
+        println!("{}", handle_comparison_expression(variables_replaced_str.to_owned()));
+    }
+    else if clean_white_space_str.chars().nth(0).unwrap().is_ascii_lowercase() &&
+        clean_white_space_str.chars().all(|x| x.is_alphanumeric()) {
+        println!("{}", '0');
+    }
+    else {
+        println!("{}", evaluate_clean_expression(&variables_replaced_str));
+    }
 }
 
 /// main user input while loop
@@ -39,6 +75,11 @@ fn main_user_input_loop(varib_map: &mut HashMap<String, String>) {
 
         // clean all white space from string and any trailing or heading escape chars
         let clean_white_space_str = remove_all_white_space_from_string(user_input.trim());
+
+        // ***CHECK FOR VALID INPUT HERE!!****
+            // if not valid - print error message
+            // continue;
+
         // check explicit division by 0
         if clean_white_space_str.contains("/0") {
             println!("{}", "You divided by 0! Enter a valid expression..");
@@ -142,17 +183,14 @@ fn get_command_line_args() -> String {
     let command_line_args: Vec<_> = env::args().collect();
 
     if command_line_args.len() == 1 {
-        println!("no command line args where passed, run regular program");
         return "".to_string()
     }
     else if command_line_args.len() == 2 {
-        println!("a command line argument was passed, evaluate, print answer, and exit program");
 
         // if argument == '--help' ---> print contents of help file
 
         // else...
         return command_line_args[1].to_owned();
-
     }
     // simply exit program after giving error message
     return "-1".to_string()
