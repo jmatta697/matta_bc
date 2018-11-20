@@ -1,15 +1,138 @@
 use std::env;
+use std::io;
+use std::process;
 use std::collections::HashMap;
 
 
 fn main() {
     // hash map will hold all variables and their values
-    let mut variable_map:HashMap<String, String> = HashMap::new();
+    let variable_map: &mut HashMap<String, String> = &mut HashMap::new();
     // program control - also gets command line arg
-    let mut command_line_arg = get_command_line_args();
+    let command_line_arg = get_command_line_args();
 
-    // replace variable declarations with value strings
+    if command_line_arg.trim() == "-1" {
+        println!("{}{}", "Number of arguments passed: ",  command_line_arg.len()-1);
+        println!("Too many command line arguments! Enter one argument or none. Exiting program...");
+    }
+    else if command_line_arg.trim() == "" {
+        main_user_input_loop(variable_map);
+    }
+    else {
 
+    }
+}
+
+/// this function processes the one-time evaluation when program is called with a command line arg
+fn main_one_time_eval(command_line_arg: String) {
+
+}
+
+/// main user input while loop
+fn main_user_input_loop(varib_map: &mut HashMap<String, String>) {
+    let mut user_input = "".to_string();
+
+    while user_input.trim() != "quit" {
+        user_input = "".to_string();
+        // wait for user input
+        io::stdin().read_line(&mut user_input)
+            .expect("failed to read input");
+
+        // clean all white space from string and any trailing or heading escape chars
+        let clean_white_space_str = remove_all_white_space_from_string(user_input.trim());
+        // check explicit division by 0
+        if clean_white_space_str.contains("/0") {
+            println!("{}", "You divided by 0! Enter a valid expression..");
+            continue;
+        }
+        // checks if incoming string starts with lowercase letter - may be a variable assignment
+        if clean_white_space_str.chars().nth(0).unwrap().is_ascii_lowercase() &&
+            is_a_variable_assignment(&clean_white_space_str) &&
+            !string_has_comparison(clean_white_space_str.to_owned()) {
+
+            handle_variable_assignment(clean_white_space_str.to_owned(), varib_map);
+            println!("{}", "variable stored");
+            // go to next iteration and wait for user input..
+            continue;
+        }
+        // replace all variable declarations with appropriate values ** this is the clean string
+        let variables_replaced_str = replace_variable_references_with_value_strings(
+            clean_white_space_str.to_owned(), varib_map);
+        // check explicit division by 0 after replacing variable values...
+        if variables_replaced_str.contains("/0") {
+            println!("{}", "You divided by 0! Enter a valid expression..");
+            continue;
+        }
+        // check if a comparison...
+        let is_comparison = string_has_comparison(variables_replaced_str.to_owned());
+        // if input string is a comparison, evaluate comparison..
+        if is_comparison {
+            println!("{}", handle_comparison_expression(variables_replaced_str.to_owned()));
+        }
+        // not a variable assignment and not a comparison - simply evaluate expression and print answer
+        else if clean_white_space_str.trim() != "quit" {
+            println!("{}", evaluate_clean_expression(&variables_replaced_str))
+        }
+    }
+}
+
+/// this function checks if an incoming expression is an assignment (ie contains a single '=')
+fn is_a_variable_assignment(test_string: &str) -> bool {
+    if test_string.find('=') == None {
+        return false;
+    }
+    // check if next char is an '=' indicating a comparison '=='
+    else {
+        let first_equals_index = test_string.find('=').unwrap();
+        if test_string.chars().nth(first_equals_index + 1).unwrap() == '=' {
+            return false;
+        }
+    }
+    true
+}
+
+#[test]
+fn test_is_a_variable_assignment() {
+    assert_eq!(false, is_a_variable_assignment("sa4rw45fw4c5e"));
+    assert_eq!(false, is_a_variable_assignment("123rq3d==aefe4c"));
+    assert_eq!(true, is_a_variable_assignment("a=23"));
+    assert_eq!(true, is_a_variable_assignment("var=(2345+45)*2<=2"));
+    // assert_eq!(true, is_a_variable_assignment(sda<=))
+}
+
+/// this functions assumes all expressions are evaluated and a single value is present on right side of '='
+fn handle_variable_assignment(incoming_assignment_expr: String, var_map: &mut HashMap<String, String>) {
+    let exp_value_vec = incoming_assignment_expr.split("=");
+    let var_val_vec: Vec<&str> = exp_value_vec.collect();
+    if var_map.contains_key(var_val_vec[0]) {
+        *var_map.get_mut(var_val_vec[0]).unwrap() = var_val_vec[1].to_owned();
+    }
+    else {
+        var_map.insert(var_val_vec[0].to_string(), var_val_vec[1].to_string());
+    }
+}
+
+#[test]
+fn test_handle_variable_declaration() {
+    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
+    sample_hash_map.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map.insert("variable1".to_string(), "10".to_string());
+
+    let mut test_hash_map0: HashMap<String, String> = HashMap::new();
+    test_hash_map0.insert("variable0".to_string(), "700".to_string());
+    test_hash_map0.insert("variable1".to_string(), "10".to_string());
+
+    let mut test_hash_map1: HashMap<String, String> = HashMap::new();
+    test_hash_map1.insert("variable0".to_string(), "700".to_string());
+    test_hash_map1.insert("variable1".to_string(), "10".to_string());
+    test_hash_map1.insert("xyz".to_string(), "200".to_string());
+
+
+    let incoming_str = "variable0=700".to_string();
+    handle_variable_assignment(incoming_str, &mut sample_hash_map);
+    assert_eq!(test_hash_map0, sample_hash_map);
+    let incoming_str0 = "xyz=200".to_string();
+    handle_variable_assignment(incoming_str0, &mut sample_hash_map);
+    assert_eq!(test_hash_map1, sample_hash_map);
 }
 
 // ------------------------------------------------------------
@@ -24,24 +147,13 @@ fn get_command_line_args() -> String {
     }
     else if command_line_args.len() == 2 {
         println!("a command line argument was passed, evaluate, print answer, and exit program");
+
+        // if argument == '--help' ---> print contents of help file
+
+        // else...
         return command_line_args[1].to_owned();
 
-//        let incoming_arg: &str = &command_line_args[1];
-//        let incoming_arg_string: String = String::from(incoming_arg);
-//
-//        match string_has_comparison(incoming_arg_string.to_owned()) {
-//            true => println!("{}", handle_comparison_expression(incoming_arg_string.to_owned())),
-//            false => println!("{}", evaluate_clean_expression(incoming_arg)),
-//        };
-
-        // run alternate program here
-        // if "--help" is passed:
-        // display help doc and exit()ll
-        // else:
-        // check expression and evaluate, then exit()
     }
-    println!("{}{}", "Number of arguments passed: ",  command_line_args.len()-1);
-    println!("Too many command line arguments! Enter one argument or none. Exiting program...");
     // simply exit program after giving error message
     return "-1".to_string()
 }
@@ -91,23 +203,29 @@ fn test_expression_string_to_vector() {
     assert_eq!(empty_v, expression_string_to_char_vector(&empty_s))
 }
 
-fn apply_operation(opernd1: i64, opernd2: i64, operation: char) -> i64 {
+fn apply_operation(opernd1: i64, opernd2: i64, operation: char) -> Option<i64> {
     match operation {
-        '+' => return opernd1 + opernd2,
-        '-' => return opernd1 - opernd2,
-        '*' => return opernd1 * opernd2,
+        '+' => return Some(opernd1 + opernd2),
+        '-' => return Some(opernd1 - opernd2),
+        '*' => return Some(opernd1 * opernd2),
         // *** take care of division by zero!! ****
-        '/' => return opernd1 / opernd2,
-        _ => return 0,
+        '/' => if opernd2 == 0 {println!("{}", "You divided by zero! Exiting program...");
+            return None
+                }
+            else {
+                return Some(opernd1 / opernd2)
+            },
+        _ => return Some(0),
     }
 }
 
 #[test]
 fn test_apply_operation() {
-    assert_eq!(2, apply_operation(1, 1, '+'));
-    assert_eq!(80, apply_operation(100, 20, '-'));
-    assert_eq!(8, apply_operation(2, 4, '*'));
-    assert_eq!(3, apply_operation(12, 4, '/'));
+    assert_eq!(Some(2), apply_operation(1, 1, '+'));
+    assert_eq!(Some(80), apply_operation(100, 20, '-'));
+    assert_eq!(Some(8), apply_operation(2, 4, '*'));
+    assert_eq!(Some(3), apply_operation(12, 4, '/'));
+    assert_eq!(None, apply_operation(2342, 0, '/'));
 }
 
 fn operator_precedence(operator: char) -> i32 {
@@ -272,8 +390,10 @@ fn evaluate_clean_expression(clean_expression: &str) -> i64 {
 
                 // perform operation
                 let operation_result = apply_operation(operand1, operand2, operation);
-                // put result in value vector
-                intermediate_value_vector.push(operation_result);
+                match operation_result {
+                    Some(vall) => intermediate_value_vector.push(vall),
+                    None => process::exit(1)
+                };
             }
             // pop '(' from operation vector
             operation_vector.pop();
@@ -288,8 +408,10 @@ fn evaluate_clean_expression(clean_expression: &str) -> i64 {
 
                 // perform operation
                 let operation_result = apply_operation(operand1, operand2, operation);
-                // put result in value vector
-                intermediate_value_vector.push(operation_result);
+                match operation_result {
+                    Some(vall) => intermediate_value_vector.push(vall),
+                    None => process::exit(1)
+                };
             }
             operation_vector.push(*token);
         }
@@ -303,7 +425,10 @@ fn evaluate_clean_expression(clean_expression: &str) -> i64 {
         // perform operation
         let operation_result = apply_operation(operand1, operand2, operation);
         // put result in value vector
-        intermediate_value_vector.push(operation_result);
+        match operation_result {
+            Some(vall) => intermediate_value_vector.push(vall),
+            None => process::exit(1),
+        };
     }
     // this will be the final answer..
     return intermediate_value_vector[intermediate_value_vector.len()-1];
@@ -359,25 +484,105 @@ fn test_evaluate_comparison_expression() {
     assert_eq!(0, evaluate_comparison_expression(vec4, String::from(">=")));
 }
 
-// ------------------------------------------------
+// -----------------End Comparison Algorithm-------------------------------
 
 /// function that replaces all variable declarations with appropriate value in hashmap
 /// if no such variable exists in map, create one and assign value to zero
 fn replace_variable_references_with_value_strings(expression_str: String,
-                                                  variable_map: HashMap<String, String>) -> String {
+                                                  variable_map: &mut HashMap<String, String>) -> String {
     // put all characters in expr string into vector
-    let mut expression_vec = expression_string_to_char_vector(&expression_str);
+    let expression_vec = expression_string_to_char_vector(&expression_str);
+    // this will be the new vector built from replaced values for variables
+    let mut new_expression_vec: Vec<String> = vec![].to_vec();
     // establish iterator for string
     let mut vector_iterator = expression_vec.iter().peekable();
 
     let mut temp_str = "".to_string();
 
     while let Some(token) = vector_iterator.next() {
+        // if lowercase letter is detected, start variable name collection
         if token.is_ascii_lowercase() {
+            // push letter to temp string (temp string is search key in map)
             temp_str.push(*token);
-            //if vector_iterator.peek() != None && vector_iterator.peek().unwrap() //******
+            // collect the rest of the variable name reference
+            // check if the next char is a lower case letter or a number, but not None
+            if vector_iterator.peek() != None && (vector_iterator.peek().unwrap().is_ascii_lowercase()
+                || vector_iterator.peek().unwrap().is_numeric()) {
+                // keep collecting until something other than a lowercase letter or number is detected
+                while let Some(token) = vector_iterator.next() {
+                    temp_str.push(*token);
+                    if vector_iterator.peek() == None || (!vector_iterator.peek().unwrap().is_ascii_lowercase() &&
+                        !vector_iterator.peek().unwrap().is_numeric()) {
+                        break;
+                    }
+                }
+            }
+            // println!("{}", temp_str);
+            // now temp string holds variable reference...
+            // retrieve value string of variable reference and insert it into new_expression_vec
+            let variable_value_string = get_variable_value(temp_str.to_owned(),
+                                                           variable_map);
+            new_expression_vec.push(variable_value_string);
+            // clear temp string
+            temp_str = "".to_string();
+        }
+        else {
+            // if variable reference is not detected, simply push char to new vec as normal
+            new_expression_vec.push(token.to_string());
         }
     }
+    // put vec together and return newly formed string
+    new_expression_vec.join("")
+}
 
-    return "".to_string()
+#[test]
+fn test_replace_variable_references_with_value_strings() {
+    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
+    sample_hash_map.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map.insert("variable1".to_string(), "510".to_string());
+    let mut sample_hash_map1: HashMap<String, String> = HashMap::new();
+    sample_hash_map1.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map1.insert("variable1".to_string(), "1".to_string());
+
+    assert_eq!("3+7".to_string(), replace_variable_references_with_value_strings("3+variable0".to_string(),
+                                                                                 &mut sample_hash_map));
+    assert_eq!("3+0".to_string(), replace_variable_references_with_value_strings("3+variable5fr6".to_string(),
+                                                                                 &mut sample_hash_map));
+    assert_eq!("(3+7)*510-0+32".to_string(), replace_variable_references_with_value_strings("(3+variable0)*variable1-a+32".to_string(),
+                                                                                 &mut sample_hash_map))
+}
+
+
+/// this function retrieves the value string of the variable reference
+/// if the reference is not found in the hashmap, insert it and assign a value of "0"
+/// takes a string
+fn get_variable_value(variable_reference: String, variable_hash_map: &mut HashMap<String, String>) -> String {
+    let mut variable_value_str = String::new();
+    if variable_hash_map.contains_key(&variable_reference) {
+        variable_value_str = variable_hash_map.get(&variable_reference).unwrap().to_owned();
+    }
+    else {
+        variable_hash_map.insert(variable_reference.to_string(), String::from("0"));
+        variable_value_str = variable_hash_map.get(&variable_reference).unwrap().to_owned();
+    }
+    return variable_value_str
+
+}
+
+#[test]
+fn test_get_variable_value() {
+    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
+    sample_hash_map.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map.insert("variable1".to_string(), "10".to_string());
+    let mut sample_hash_map1: HashMap<String, String> = HashMap::new();
+    sample_hash_map1.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map1.insert("variable1".to_string(), "1".to_string());
+
+    // println!("{:?}", sample_hash_map1.to_owned());
+    assert_eq!("0".to_string(), get_variable_value("variable2".to_string(),
+                                                 &mut sample_hash_map1));
+    // println!("{:?}", sample_hash_map1.to_owned());
+
+    assert_eq!("10".to_string(), get_variable_value("variable1".to_string(),
+                                                    &mut sample_hash_map));
 }

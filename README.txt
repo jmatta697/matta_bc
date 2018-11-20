@@ -18,9 +18,19 @@ bc 5+3
 should invoke bc for the single computation, print the answer and then exit the program.
 support using the help flag: bc --help should explain what your subset of bc can do.
 
-source for evaluation algorithm:
+source for expression evaluation algorithm:
 https://www.geeksforgeeks.org/expression-evaluation/
 
 notes:
 -multiple digit numbers cannot have spaces between digits (ex. 32 cannot be expressed as 3 2)
 -multiplication cant be done by (2)(3) or 2(3), must be (2)*(3) or 2*(3).
+-variable names must start with a lowercase letter. They may only contain lowercase letters and numbers.
+-when passing a command line argument without quotes around it, argument cannot contain spaces or parentheses
+-variables can NOT be assigned to other variables (ie. 'variable0 = variable1' is not valid)
+-when evaluating comparisons, only one set of comparison notation is allowed (ie. '3+4<=5==0' is not allowed)
+-if assigning a value to a variable, user input must start with a lowercase letter followed by any number of any
+    combination of lowercase letters and numbers followed by '='. The assigned value may be a mathematical expression
+    or a comparison of expressions.
+-can NOT assign a value of '0' to a variable by simply typing a variable name and pressing enter (ie. entering
+    'variable2' and then pressing enter will not store the variabale and assign a zero value, it will result in an
+    error.
