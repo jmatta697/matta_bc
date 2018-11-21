@@ -7,7 +7,7 @@ and print an answer, then wait for the user to type more.
 
 This implementation of bc does the following:
 
-supports arithmetic (+ - * /)
+supports INTEGER arithmetic (+ - * /)
 supports parenthesis including nested parentheses
 supports variables -
     variables that are referenced but not yet assigned automatically get a value of zero.
@@ -37,6 +37,8 @@ $ ./matta_bc '(3+3)/2'
 notes:
 - Multiple digit numbers cannot have spaces between digits (ex. 32 cannot be expressed as 3 2) when passing an expression
     as a command line argument without quotes
+- Two comparisons cannot be combined in one expression such as 234<=23==1; this will cause a panic. Some other double
+    comparisons are allowed such as 344<567==1.
 - Multiplication cannot be done by (2)(3) or 2(3), must be (2)*(3) or 2*(3).
 - Variable names must start with a lowercase letter. They may only contain lowercase letters and numbers.
 - Variable names must end in numbers, if they include numbers. Varibale names cannot have numbers inside name

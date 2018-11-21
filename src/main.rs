@@ -1,3 +1,5 @@
+extern crate regex;
+
 use std::env;
 use std::io;
 use std::process;
@@ -145,15 +147,6 @@ fn is_a_variable_assignment(test_string: &str) -> bool {
     true
 }
 
-#[test]
-fn test_is_a_variable_assignment() {
-    assert_eq!(false, is_a_variable_assignment("sa4rw45fw4c5e"));
-    assert_eq!(false, is_a_variable_assignment("123rq3d==aefe4c"));
-    assert_eq!(true, is_a_variable_assignment("a=23"));
-    assert_eq!(true, is_a_variable_assignment("var=(2345+45)*2<=2"));
-    // assert_eq!(true, is_a_variable_assignment(sda<=))
-}
-
 /// this functions assumes all expressions are evaluated and a single value is present on right side of '='
 fn handle_variable_assignment(incoming_assignment_expr: String, var_map: &mut HashMap<String, String>) {
     let exp_value_vec = incoming_assignment_expr.split("=");
@@ -165,32 +158,6 @@ fn handle_variable_assignment(incoming_assignment_expr: String, var_map: &mut Ha
         var_map.insert(var_val_vec[0].to_string(), var_val_vec[1].to_string());
     }
 }
-
-#[test]
-fn test_handle_variable_declaration() {
-    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
-    sample_hash_map.insert("variable0".to_string(), "7".to_string());
-    sample_hash_map.insert("variable1".to_string(), "10".to_string());
-
-    let mut test_hash_map0: HashMap<String, String> = HashMap::new();
-    test_hash_map0.insert("variable0".to_string(), "700".to_string());
-    test_hash_map0.insert("variable1".to_string(), "10".to_string());
-
-    let mut test_hash_map1: HashMap<String, String> = HashMap::new();
-    test_hash_map1.insert("variable0".to_string(), "700".to_string());
-    test_hash_map1.insert("variable1".to_string(), "10".to_string());
-    test_hash_map1.insert("xyz".to_string(), "200".to_string());
-
-
-    let incoming_str = "variable0=700".to_string();
-    handle_variable_assignment(incoming_str, &mut sample_hash_map);
-    assert_eq!(test_hash_map0, sample_hash_map);
-    let incoming_str0 = "xyz=200".to_string();
-    handle_variable_assignment(incoming_str0, &mut sample_hash_map);
-    assert_eq!(test_hash_map1, sample_hash_map);
-}
-
-// ------------------------------------------------------------
 
 /// determines amount of command line arguments passed to program call
 fn get_command_line_args() -> String {
@@ -210,8 +177,6 @@ fn get_command_line_args() -> String {
     return "-1".to_string()
 }
 
-// --------------- Utility Functions ------------------------------------------
-
 fn string_has_comparison(in_string: String) -> bool {
     if in_string.contains("==") || in_string.contains("<=") || in_string.contains(">=")
         || in_string.contains("<") || in_string.contains(">") {
@@ -220,39 +185,10 @@ fn string_has_comparison(in_string: String) -> bool {
     false
 }
 
-#[test]
-fn test_string_has_comparison() {
-    let string0 = String::from("423424<fw34f3");
-    assert_eq!(true, string_has_comparison(string0));
-    let string1 = String::from("423424<=fw34f3");
-    assert_eq!(true, string_has_comparison(string1));
-    let string2 = String::from("4==f3");
-    assert_eq!(true, string_has_comparison(string2));
-    let string3 = String::from("4234>w34f3");
-    assert_eq!(true, string_has_comparison(string3));
-    let string4 = String::from("4234=>w34f3");
-    assert_eq!(true, string_has_comparison(string4));
-    let string5 = String::from("4234=w34f3");
-    assert_eq!(false, string_has_comparison(string5));
-    let string6 = String::from("4234w34f3");
-    assert_eq!(false, string_has_comparison(string6));
-}
-
 /// changes incoming expression string into a char vector
 fn expression_string_to_char_vector(expr_string: &str) -> Vec<char> {
     let char_vec: Vec<_> = expr_string.chars().collect();
     return char_vec
-}
-
-#[test]
-fn test_expression_string_to_vector() {
-    let s = String::from("(3+4)*2/23");
-    let empty_s = String::from("");
-    let v = vec!['(', '3', '+', '4', ')', '*', '2', '/', '2', '3'];
-    let empty_v: Vec<char> = vec![];
-
-    assert_eq!(v, expression_string_to_char_vector(&s));
-    assert_eq!(empty_v, expression_string_to_char_vector(&empty_s))
 }
 
 fn apply_operation(opernd1: i64, opernd2: i64, operation: char) -> Option<i64> {
@@ -271,29 +207,10 @@ fn apply_operation(opernd1: i64, opernd2: i64, operation: char) -> Option<i64> {
     }
 }
 
-#[test]
-fn test_apply_operation() {
-    assert_eq!(Some(2), apply_operation(1, 1, '+'));
-    assert_eq!(Some(80), apply_operation(100, 20, '-'));
-    assert_eq!(Some(8), apply_operation(2, 4, '*'));
-    assert_eq!(Some(3), apply_operation(12, 4, '/'));
-    assert_eq!(None, apply_operation(2342, 0, '/'));
-}
-
 fn operator_precedence(operator: char) -> i32 {
     if operator == '+' || operator == '-' {return 1};
     if operator == '*' || operator == '/' {return 2};
     return 0;
-}
-
-#[test]
-fn test_operator_precedence() {
-    assert_eq!(1, operator_precedence('+'));
-    assert_eq!(1, operator_precedence('-'));
-    assert_eq!(2, operator_precedence('*'));
-    assert_eq!(2, operator_precedence('/'));
-    assert_eq!(0, operator_precedence('('));
-    assert_eq!(0, operator_precedence(')'));
 }
 
 fn remove_all_white_space_from_string(incoming_string: &str) -> String {
@@ -307,25 +224,6 @@ fn remove_all_white_space_from_string(incoming_string: &str) -> String {
         if c != ' ' { out_string.push(c); }
     }
     out_string
-}
-
-#[test]
-fn test_remove_all_white_space_from_string() {
-    let str0 = "something";
-    let str1 = " s o m e t h i n g ";
-    let str2 = "som          ething";
-    let str3 = " so   m  e   t   hin   g";
-    let str4 = "      som eth in   g  ";
-    let str5 = "";
-    let str6 = "   ";
-
-    assert_eq!("something", remove_all_white_space_from_string(str0));
-    assert_eq!("something", remove_all_white_space_from_string(str1));
-    assert_eq!("something", remove_all_white_space_from_string(str2));
-    assert_eq!("something", remove_all_white_space_from_string(str3));
-    assert_eq!("something", remove_all_white_space_from_string(str4));
-    assert_eq!("", remove_all_white_space_from_string(str5));
-    assert_eq!("", remove_all_white_space_from_string(str6));
 }
 
 /// this function splits the incoming comparison string into two expression strings
@@ -344,18 +242,6 @@ fn split_comparison_string(comparison_string: String) -> Vec<String> {
     return vec!["".to_string()]
 }
 
-#[test]
-fn test_split_comparison_string() {
-    let vec0 = vec!["4", "3"];
-
-    assert_eq!(vec0, split_comparison_string("4==3".to_string()));
-    assert_eq!(vec0, split_comparison_string("4<=3".to_string()));
-    assert_eq!(vec0, split_comparison_string("4>=3".to_string()));
-    assert_eq!(vec0, split_comparison_string("4<3".to_string()));
-    assert_eq!(vec0, split_comparison_string("4>3".to_string()));
-
-}
-
 fn extract_comparison_notation(comparison_string: String) -> String {
     if comparison_string.contains("==") {return "==".to_string()}
     else if comparison_string.contains("<=") {return "<=".to_string()}
@@ -365,18 +251,6 @@ fn extract_comparison_notation(comparison_string: String) -> String {
     return "".to_string()
 }
 
-#[test]
-fn test_extract_comparison_notation() {
-    assert_eq!("==".to_string(), extract_comparison_notation("23==45".to_string()));
-    assert_eq!("<=".to_string(), extract_comparison_notation("23<=45".to_string()));
-    assert_eq!(">=".to_string(), extract_comparison_notation("23>=45".to_string()));
-    assert_eq!("<".to_string(), extract_comparison_notation("23<5".to_string()));
-    assert_eq!(">".to_string(), extract_comparison_notation("23>45".to_string()));
-    assert_eq!("".to_string(), extract_comparison_notation("2345".to_string()));
-}
-
-
-///*************
 fn handle_comparison_expression(string_expression: String) -> i32 {
     let operation = extract_comparison_notation(string_expression.to_owned());
     let comparison_operands_vec = split_comparison_string(string_expression.to_owned());
@@ -385,17 +259,6 @@ fn handle_comparison_expression(string_expression: String) -> i32 {
 
     return evaluate_comparison_expression(str_comparison_operands_vec, operation)
 }
-
-#[test]
-fn test_handle_comparison_expression() {
-    assert_eq!(1, handle_comparison_expression("3==3".to_string()));
-    assert_eq!(0, handle_comparison_expression("3<3".to_string()));
-    assert_eq!(0, handle_comparison_expression("(3+3)/2>3".to_string()));
-    assert_eq!(1, handle_comparison_expression("(((32+6)+2*5)-8)/2<=21".to_string()));
-    assert_eq!(0, handle_comparison_expression("34==(4+1)*2".to_string()));
-    assert_eq!(1, handle_comparison_expression("3>=3".to_string()));
-}
-
 
 // ------------------ Expression Evaluation Algorithm -------------------------
 
@@ -485,22 +348,7 @@ fn evaluate_clean_expression(clean_expression: &str) -> i64 {
     // this will be the final answer..
     return intermediate_value_vector[intermediate_value_vector.len()-1];
 }
-
-#[test]
-fn test_evaluate_clean_expression() {
-    assert_eq!(5, evaluate_clean_expression(&"3+2"));
-    assert_eq!(48, evaluate_clean_expression(&"(32+6)+2*5"));
-    assert_eq!(20, evaluate_clean_expression(&"(((32+6)+2*5)-8)/2"));
-    assert_eq!(20, evaluate_clean_expression(&"  ((( 32+  6)+2 *5) -8  )/   2" ));
-    assert_eq!(20, evaluate_clean_expression(&"  ((( 32+  6)    +2 *5) -8  )/   2" ));
-    assert_eq!(1, evaluate_clean_expression(&"21/21"));
-    assert_eq!(3, evaluate_clean_expression(&"3"));
-    assert_eq!(0, evaluate_clean_expression(&"0"))
-}
-
 // --------------- END Expression Evaluation Algorithm --------------------
-
-// ------------------ Comparison Evaluation Algorithm ---------------------
 
 fn evaluate_comparison_expression(expressions_vec: Vec<&str>, comparison_notation: String) -> i32 {
     let value_of_exp0 = evaluate_clean_expression(&expressions_vec[0]);
@@ -519,24 +367,6 @@ fn evaluate_comparison_expression(expressions_vec: Vec<&str>, comparison_notatio
         false => return 0,
     }
 }
-
-#[test]
-fn test_evaluate_comparison_expression() {
-    // vec = [20, 20]
-    let vec0 = vec!["(((32+6)+2*5)-8)/2", "20"];
-    let vec1 = vec!["(((32+6)+2*5)-8)/2", "20"];
-    let vec2 = vec!["(((32+6)+2*5)-8)/2", "20"];
-    let vec3 = vec!["(((32+6)+2*5)-8)/2", "20"];
-    let vec4 = vec!["(((32+6)+2*5)-8)/2", "21"];
-
-    assert_eq!(1, evaluate_comparison_expression(vec0, String::from("==")));
-    assert_eq!(0, evaluate_comparison_expression(vec1, String::from("<")));
-    assert_eq!(0, evaluate_comparison_expression(vec2, String::from(">")));
-    assert_eq!(1, evaluate_comparison_expression(vec3, String::from("<=")));
-    assert_eq!(0, evaluate_comparison_expression(vec4, String::from(">=")));
-}
-
-// -----------------End Comparison Algorithm-------------------------------
 
 /// function that replaces all variable declarations with appropriate value in hashmap
 /// if no such variable exists in map, create one and assign value to zero
@@ -587,24 +417,6 @@ fn replace_variable_references_with_value_strings(expression_str: String,
     new_expression_vec.join("")
 }
 
-#[test]
-fn test_replace_variable_references_with_value_strings() {
-    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
-    sample_hash_map.insert("variable0".to_string(), "7".to_string());
-    sample_hash_map.insert("variable1".to_string(), "510".to_string());
-    let mut sample_hash_map1: HashMap<String, String> = HashMap::new();
-    sample_hash_map1.insert("variable0".to_string(), "7".to_string());
-    sample_hash_map1.insert("variable1".to_string(), "1".to_string());
-
-    assert_eq!("3+7".to_string(), replace_variable_references_with_value_strings("3+variable0".to_string(),
-                                                                                 &mut sample_hash_map));
-    assert_eq!("3+0".to_string(), replace_variable_references_with_value_strings("3+variable5fr6".to_string(),
-                                                                                 &mut sample_hash_map));
-    assert_eq!("(3+7)*510-0+32".to_string(), replace_variable_references_with_value_strings("(3+variable0)*variable1-a+32".to_string(),
-                                                                                 &mut sample_hash_map))
-}
-
-
 /// this function retrieves the value string of the variable reference
 /// if the reference is not found in the hashmap, insert it and assign a value of "0"
 /// takes a string
@@ -621,24 +433,6 @@ fn get_variable_value(variable_reference: String, variable_hash_map: &mut HashMa
 
 }
 
-#[test]
-fn test_get_variable_value() {
-    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
-    sample_hash_map.insert("variable0".to_string(), "7".to_string());
-    sample_hash_map.insert("variable1".to_string(), "10".to_string());
-    let mut sample_hash_map1: HashMap<String, String> = HashMap::new();
-    sample_hash_map1.insert("variable0".to_string(), "7".to_string());
-    sample_hash_map1.insert("variable1".to_string(), "1".to_string());
-
-    // println!("{:?}", sample_hash_map1.to_owned());
-    assert_eq!("0".to_string(), get_variable_value("variable2".to_string(),
-                                                 &mut sample_hash_map1));
-    // println!("{:?}", sample_hash_map1.to_owned());
-
-    assert_eq!("10".to_string(), get_variable_value("variable1".to_string(),
-                                                    &mut sample_hash_map));
-}
-
 // ---------------- Valid Expression Check Functions ------------------------------------
 
 /// makes sure there are only allowed characters in string
@@ -652,22 +446,6 @@ fn check_only_valid_chars(expr_str: &str, reg: &Regex) -> bool {
     return reg.is_match(expr_str);
 }
 
-#[test]
-fn test_check_only_valid_chars() {
-    let regex_pat: &Regex = &Regex::new(r"^[a-z 0-9+\-*/()=<>]*$").unwrap();
-    assert_eq!(true, check_only_valid_chars("1234567890-+><=()qwertyuioplkjhgfdsazxcvbnm",
-                                            regex_pat));
-    assert_eq!(false, check_only_valid_chars("1234%567890-+><=()qwer@tyuioplkjhgfdsazxcvbnm",
-                                            regex_pat));
-    assert_eq!(false, check_only_valid_chars("1234567890-+><=()qwerMtyuioplkjhgfdsazxcvbnm",
-                                            regex_pat));
-    assert_eq!(false, check_only_valid_chars("1234567890-+><=()qw&ertyuioplkjhgfdsazxcvbnm",
-                                            regex_pat));
-    assert_eq!(false, check_only_valid_chars("1234567890-+><=()QWERTYUIOPLKJHGFDSAZXCVBNM",
-                                             regex_pat));
-    assert_eq!(false, check_only_valid_chars("", regex_pat))
-}
-
 /// assumes check valid char has already accounted for empty string
 fn check_first_char_in_exp(expr_str: &str) -> bool {
     let first_ch = expr_str.chars().nth(0).unwrap();
@@ -678,41 +456,12 @@ fn check_first_char_in_exp(expr_str: &str) -> bool {
     false
 }
 
-#[test]
-fn test_check_first_char_in_exp() {
-    assert_eq!(false, check_first_char_in_exp("098usidk+o12"));
-    assert_eq!(false, check_first_char_in_exp("+xf34trwcf4"));
-    assert_eq!(false, check_first_char_in_exp("-sdfse"));
-    assert_eq!(true, check_first_char_in_exp("asads"));
-    assert_eq!(false, check_first_char_in_exp("<sdwe4"));
-    assert_eq!(true, check_first_char_in_exp("423rw3rf"));
-    assert_eq!(true, check_first_char_in_exp("(dw34rw"));
-    assert_eq!(false, check_first_char_in_exp(")cwe4rcw"));
-    assert_eq!(false, check_first_char_in_exp("=dqwrexw"));
-    assert_eq!(false, check_first_char_in_exp("0"));
-    assert_eq!(true, check_last_char(")"));
-}
-
 fn check_last_char(expr_str: &str) -> bool {
     let last_char = expr_str.chars().last().unwrap();
     if expr_str.len() == 1 || last_char.is_ascii_alphanumeric() || last_char == ')' {
         return true
     }
     return false
-}
-
-#[test]
-fn test_check_last_char() {
-    assert_eq!(true, check_last_char("34rdqq34"));
-    assert_eq!(true, check_last_char("34rdqq3s"));
-    assert_eq!(true, check_last_char("(34rdqq3)"));
-    assert_eq!(false, check_last_char("34rdqq34("));
-    assert_eq!(false, check_last_char("34rdqq34-"));
-    assert_eq!(false, check_last_char("34rdqq34*"));
-    assert_eq!(false, check_last_char("34rdqq34>"));
-    assert_eq!(false, check_last_char("34rdqq34="));
-    assert_eq!(false, check_last_char("34rdqq34/"));
-    assert_eq!(true, check_last_char("3"));
 }
 
 /// checks if there are matching pairs of parentheses
@@ -724,17 +473,6 @@ fn count_valid_parentheses(expr_str: &str) -> bool {
         else if ch == ')' {num_close_parentheses = num_close_parentheses + 1;}
     }
     return num_open_parentheses == num_close_parentheses
-}
-
-#[test]
-fn test_count_valid_parentheses() {
-    assert_eq!(true, count_valid_parentheses("((3+3)/2*3)/3"));
-    assert_eq!(false, count_valid_parentheses("((3+3)/2*3/3"));
-    assert_eq!(false, count_valid_parentheses("(3+3/2*3/3"));
-    assert_eq!(false, count_valid_parentheses("3+3/2*3)/3"));
-    assert_eq!(false, count_valid_parentheses("3+3)/2*3)/3"));
-    assert_eq!(true, count_valid_parentheses("3+3/2*3/3"));
-    assert_eq!(true, count_valid_parentheses("(((er43r((fs((3+3)/2*3)/3)))sfe))66yr"));
 }
 
 /// assumes valid first character and valid last char - checks for any syntax errors in expression string
@@ -786,22 +524,6 @@ fn check_expr_syntax(expr_str: &str) -> bool {
     return true;
 }
 
-#[test]
-fn test_check_expr_syntax() {
-    assert_eq!(true, check_expr_syntax("(((32+6)+2*5)-8)/2"));
-    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2(3+2)"));
-    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/joe(3+2)"));
-    assert_eq!(false, check_expr_syntax("(((+32+6)+2*5)-8)/2"));
-    assert_eq!(false, check_expr_syntax("(((32+6)>+2*5)-8)/2"));
-    assert_eq!(false, check_expr_syntax("(((32+6)++2*5)-8)/2"));
-    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2<<8"));
-    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2=>9"));
-    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2=+"));
-    assert_eq!(true, check_expr_syntax("(((32+6)+2*5)-8)/2=="));
-    assert_eq!(true, check_expr_syntax("9"));
-    assert_eq!(true, check_expr_syntax("a"))
-}
-
 /// test ALL string coming in
 fn valid_expression_str(expr_str: &str, regx: &Regex) -> bool {
     if !check_only_valid_chars(expr_str, regx) {return false};
@@ -812,23 +534,7 @@ fn valid_expression_str(expr_str: &str, regx: &Regex) -> bool {
     return true
 }
 
-#[test]
-fn test_valid_expression_str() {
-    let regex_pat: &Regex = &Regex::new(r"^[a-z 0-9+\-*/()=<>]*$").unwrap();
-    assert_eq!(true, valid_expression_str("(((32+6)+2*5)-8)/2", regex_pat));
-    assert_eq!(false, valid_expression_str("adrw34w4", regex_pat));
-    assert_eq!(false, valid_expression_str("(", regex_pat));
-    assert_eq!(false, valid_expression_str("((+2*5)-8)/2", regex_pat));
-    assert_eq!(false, valid_expression_str("((()+2*5)-8)/2", regex_pat));
-    assert_eq!(false, valid_expression_str("", regex_pat));
-    assert_eq!(false, valid_expression_str("+(((32+6)+2*5)-8)/2", regex_pat));
-    assert_eq!(false, valid_expression_str("(((32+6)+2*5)-8)/2l", regex_pat));
-    assert_eq!(true, valid_expression_str("kkkkkkkkkkkk", regex_pat));
-    assert_eq!(true, valid_expression_str("joe+3", regex_pat));
-    assert_eq!(true, valid_expression_str("(joe+3)", regex_pat));
-    assert_eq!(true, valid_expression_str("3*joe+90+e4", regex_pat));
-    assert_eq!(true, valid_expression_str("3", regex_pat));
-}
+// -----------------------------
 
 fn print_help_text() {
     let help_text = "\nAuthor: Joe Matta
@@ -840,7 +546,7 @@ and print an answer, then wait for the user to type more.
 
 This implementation of bc does the following:
 
-supports arithmetic (+ - * /)
+supports INTEGER arithmetic (+ - * /)
 supports parenthesis including nested parentheses
 supports variables -
     variables that are referenced but not yet assigned automatically get a value of zero.
@@ -869,7 +575,9 @@ $ ./matta_bc '(3+3)/2'
 
 notes:
 - Multiple digit numbers cannot have spaces between digits (ex. 32 cannot be expressed as 3 2) when passing an expression
-    as a command line argument without quotes
+    as a command line argument without quotes.
+- Two comparisons cannot be combined in one expression such as 234<=23==1; this will cause a panic. Some other double
+    comparisons are allowed such as 344<567==1.
 - Multiplication cannot be done by (2)(3) or 2(3), must be (2)*(3) or 2*(3).
 - Variable names must start with a lowercase letter. They may only contain lowercase letters and numbers.
 - Variable names must end in numbers, if they include numbers. Varibale names cannot have numbers inside name
@@ -895,4 +603,289 @@ https://www.geeksforgeeks.org/expression-evaluation/\n";
 }
 
 
+// -------------------------- TESTS ----------------------------------------------------------------
 
+#[test]
+fn test_is_a_variable_assignment() {
+    assert_eq!(false, is_a_variable_assignment("sa4rw45fw4c5e"));
+    assert_eq!(false, is_a_variable_assignment("123rq3d==aefe4c"));
+    assert_eq!(true, is_a_variable_assignment("a=23"));
+    assert_eq!(true, is_a_variable_assignment("var=(2345+45)*2<=2"));
+    // assert_eq!(true, is_a_variable_assignment(sda<=))
+}
+
+#[test]
+fn test_handle_variable_declaration() {
+    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
+    sample_hash_map.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map.insert("variable1".to_string(), "10".to_string());
+
+    let mut test_hash_map0: HashMap<String, String> = HashMap::new();
+    test_hash_map0.insert("variable0".to_string(), "700".to_string());
+    test_hash_map0.insert("variable1".to_string(), "10".to_string());
+
+    let mut test_hash_map1: HashMap<String, String> = HashMap::new();
+    test_hash_map1.insert("variable0".to_string(), "700".to_string());
+    test_hash_map1.insert("variable1".to_string(), "10".to_string());
+    test_hash_map1.insert("xyz".to_string(), "200".to_string());
+
+
+    let incoming_str = "variable0=700".to_string();
+    handle_variable_assignment(incoming_str, &mut sample_hash_map);
+    assert_eq!(test_hash_map0, sample_hash_map);
+    let incoming_str0 = "xyz=200".to_string();
+    handle_variable_assignment(incoming_str0, &mut sample_hash_map);
+    assert_eq!(test_hash_map1, sample_hash_map);
+}
+
+#[test]
+fn test_string_has_comparison() {
+    let string0 = String::from("423424<fw34f3");
+    assert_eq!(true, string_has_comparison(string0));
+    let string1 = String::from("423424<=fw34f3");
+    assert_eq!(true, string_has_comparison(string1));
+    let string2 = String::from("4==f3");
+    assert_eq!(true, string_has_comparison(string2));
+    let string3 = String::from("4234>w34f3");
+    assert_eq!(true, string_has_comparison(string3));
+    let string4 = String::from("4234=>w34f3");
+    assert_eq!(true, string_has_comparison(string4));
+    let string5 = String::from("4234=w34f3");
+    assert_eq!(false, string_has_comparison(string5));
+    let string6 = String::from("4234w34f3");
+    assert_eq!(false, string_has_comparison(string6));
+}
+
+#[test]
+fn test_expression_string_to_vector() {
+    let s = String::from("(3+4)*2/23");
+    let empty_s = String::from("");
+    let v = vec!['(', '3', '+', '4', ')', '*', '2', '/', '2', '3'];
+    let empty_v: Vec<char> = vec![];
+
+    assert_eq!(v, expression_string_to_char_vector(&s));
+    assert_eq!(empty_v, expression_string_to_char_vector(&empty_s))
+}
+
+#[test]
+fn test_apply_operation() {
+    assert_eq!(Some(2), apply_operation(1, 1, '+'));
+    assert_eq!(Some(80), apply_operation(100, 20, '-'));
+    assert_eq!(Some(8), apply_operation(2, 4, '*'));
+    assert_eq!(Some(3), apply_operation(12, 4, '/'));
+    assert_eq!(None, apply_operation(2342, 0, '/'));
+}
+
+#[test]
+fn test_operator_precedence() {
+    assert_eq!(1, operator_precedence('+'));
+    assert_eq!(1, operator_precedence('-'));
+    assert_eq!(2, operator_precedence('*'));
+    assert_eq!(2, operator_precedence('/'));
+    assert_eq!(0, operator_precedence('('));
+    assert_eq!(0, operator_precedence(')'));
+}
+
+#[test]
+fn test_remove_all_white_space_from_string() {
+    let str0 = "something";
+    let str1 = " s o m e t h i n g ";
+    let str2 = "som          ething";
+    let str3 = " so   m  e   t   hin   g";
+    let str4 = "      som eth in   g  ";
+    let str5 = "";
+    let str6 = "   ";
+
+    assert_eq!("something", remove_all_white_space_from_string(str0));
+    assert_eq!("something", remove_all_white_space_from_string(str1));
+    assert_eq!("something", remove_all_white_space_from_string(str2));
+    assert_eq!("something", remove_all_white_space_from_string(str3));
+    assert_eq!("something", remove_all_white_space_from_string(str4));
+    assert_eq!("", remove_all_white_space_from_string(str5));
+    assert_eq!("", remove_all_white_space_from_string(str6));
+}
+
+#[test]
+fn test_split_comparison_string() {
+    let vec0 = vec!["4", "3"];
+
+    assert_eq!(vec0, split_comparison_string("4==3".to_string()));
+    assert_eq!(vec0, split_comparison_string("4<=3".to_string()));
+    assert_eq!(vec0, split_comparison_string("4>=3".to_string()));
+    assert_eq!(vec0, split_comparison_string("4<3".to_string()));
+    assert_eq!(vec0, split_comparison_string("4>3".to_string()));
+
+}
+
+#[test]
+fn test_extract_comparison_notation() {
+    assert_eq!("==".to_string(), extract_comparison_notation("23==45".to_string()));
+    assert_eq!("<=".to_string(), extract_comparison_notation("23<=45".to_string()));
+    assert_eq!(">=".to_string(), extract_comparison_notation("23>=45".to_string()));
+    assert_eq!("<".to_string(), extract_comparison_notation("23<5".to_string()));
+    assert_eq!(">".to_string(), extract_comparison_notation("23>45".to_string()));
+    assert_eq!("".to_string(), extract_comparison_notation("2345".to_string()));
+}
+
+#[test]
+fn test_handle_comparison_expression() {
+    assert_eq!(1, handle_comparison_expression("3==3".to_string()));
+    assert_eq!(0, handle_comparison_expression("3<3".to_string()));
+    assert_eq!(0, handle_comparison_expression("(3+3)/2>3".to_string()));
+    assert_eq!(1, handle_comparison_expression("(((32+6)+2*5)-8)/2<=21".to_string()));
+    assert_eq!(0, handle_comparison_expression("34==(4+1)*2".to_string()));
+    assert_eq!(1, handle_comparison_expression("3>=3".to_string()));
+}
+
+#[test]
+fn test_evaluate_clean_expression() {
+    assert_eq!(5, evaluate_clean_expression(&"3+2"));
+    assert_eq!(48, evaluate_clean_expression(&"(32+6)+2*5"));
+    assert_eq!(20, evaluate_clean_expression(&"(((32+6)+2*5)-8)/2"));
+    assert_eq!(20, evaluate_clean_expression(&"  ((( 32+  6)+2 *5) -8  )/   2" ));
+    assert_eq!(20, evaluate_clean_expression(&"  ((( 32+  6)    +2 *5) -8  )/   2" ));
+    assert_eq!(1, evaluate_clean_expression(&"21/21"));
+    assert_eq!(3, evaluate_clean_expression(&"3"));
+    assert_eq!(0, evaluate_clean_expression(&"0"))
+}
+
+#[test]
+fn test_evaluate_comparison_expression() {
+    // vec = [20, 20]
+    let vec0 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec1 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec2 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec3 = vec!["(((32+6)+2*5)-8)/2", "20"];
+    let vec4 = vec!["(((32+6)+2*5)-8)/2", "21"];
+
+    assert_eq!(1, evaluate_comparison_expression(vec0, String::from("==")));
+    assert_eq!(0, evaluate_comparison_expression(vec1, String::from("<")));
+    assert_eq!(0, evaluate_comparison_expression(vec2, String::from(">")));
+    assert_eq!(1, evaluate_comparison_expression(vec3, String::from("<=")));
+    assert_eq!(0, evaluate_comparison_expression(vec4, String::from(">=")));
+}
+
+#[test]
+fn test_replace_variable_references_with_value_strings() {
+    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
+    sample_hash_map.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map.insert("variable1".to_string(), "510".to_string());
+    let mut sample_hash_map1: HashMap<String, String> = HashMap::new();
+    sample_hash_map1.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map1.insert("variable1".to_string(), "1".to_string());
+
+    assert_eq!("3+7".to_string(), replace_variable_references_with_value_strings("3+variable0".to_string(),
+                                                                                 &mut sample_hash_map));
+    assert_eq!("3+0".to_string(), replace_variable_references_with_value_strings("3+variable5fr6".to_string(),
+                                                                                 &mut sample_hash_map));
+    assert_eq!("(3+7)*510-0+32".to_string(), replace_variable_references_with_value_strings("(3+variable0)*variable1-a+32".to_string(),
+                                                                                            &mut sample_hash_map))
+}
+
+#[test]
+fn test_get_variable_value() {
+    let mut sample_hash_map: HashMap<String, String> = HashMap::new();
+    sample_hash_map.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map.insert("variable1".to_string(), "10".to_string());
+    let mut sample_hash_map1: HashMap<String, String> = HashMap::new();
+    sample_hash_map1.insert("variable0".to_string(), "7".to_string());
+    sample_hash_map1.insert("variable1".to_string(), "1".to_string());
+
+    // println!("{:?}", sample_hash_map1.to_owned());
+    assert_eq!("0".to_string(), get_variable_value("variable2".to_string(),
+                                                   &mut sample_hash_map1));
+    // println!("{:?}", sample_hash_map1.to_owned());
+
+    assert_eq!("10".to_string(), get_variable_value("variable1".to_string(),
+                                                    &mut sample_hash_map));
+}
+
+#[test]
+fn test_check_only_valid_chars() {
+    let regex_pat: &Regex = &Regex::new(r"^[a-z 0-9+\-*/()=<>]*$").unwrap();
+    assert_eq!(true, check_only_valid_chars("1234567890-+><=()qwertyuioplkjhgfdsazxcvbnm",
+                                            regex_pat));
+    assert_eq!(false, check_only_valid_chars("1234%567890-+><=()qwer@tyuioplkjhgfdsazxcvbnm",
+                                             regex_pat));
+    assert_eq!(false, check_only_valid_chars("1234567890-+><=()qwerMtyuioplkjhgfdsazxcvbnm",
+                                             regex_pat));
+    assert_eq!(false, check_only_valid_chars("1234567890-+><=()qw&ertyuioplkjhgfdsazxcvbnm",
+                                             regex_pat));
+    assert_eq!(false, check_only_valid_chars("1234567890-+><=()QWERTYUIOPLKJHGFDSAZXCVBNM",
+                                             regex_pat));
+    assert_eq!(false, check_only_valid_chars("", regex_pat))
+}
+
+#[test]
+fn test_check_first_char_in_exp() {
+    assert_eq!(false, check_first_char_in_exp("098usidk+o12"));
+    assert_eq!(false, check_first_char_in_exp("+xf34trwcf4"));
+    assert_eq!(false, check_first_char_in_exp("-sdfse"));
+    assert_eq!(true, check_first_char_in_exp("asads"));
+    assert_eq!(false, check_first_char_in_exp("<sdwe4"));
+    assert_eq!(true, check_first_char_in_exp("423rw3rf"));
+    assert_eq!(true, check_first_char_in_exp("(dw34rw"));
+    assert_eq!(false, check_first_char_in_exp(")cwe4rcw"));
+    assert_eq!(false, check_first_char_in_exp("=dqwrexw"));
+    assert_eq!(false, check_first_char_in_exp("0"));
+    assert_eq!(true, check_last_char(")"));
+}
+
+#[test]
+fn test_check_last_char() {
+    assert_eq!(true, check_last_char("34rdqq34"));
+    assert_eq!(true, check_last_char("34rdqq3s"));
+    assert_eq!(true, check_last_char("(34rdqq3)"));
+    assert_eq!(false, check_last_char("34rdqq34("));
+    assert_eq!(false, check_last_char("34rdqq34-"));
+    assert_eq!(false, check_last_char("34rdqq34*"));
+    assert_eq!(false, check_last_char("34rdqq34>"));
+    assert_eq!(false, check_last_char("34rdqq34="));
+    assert_eq!(false, check_last_char("34rdqq34/"));
+    assert_eq!(true, check_last_char("3"));
+}
+
+#[test]
+fn test_count_valid_parentheses() {
+    assert_eq!(true, count_valid_parentheses("((3+3)/2*3)/3"));
+    assert_eq!(false, count_valid_parentheses("((3+3)/2*3/3"));
+    assert_eq!(false, count_valid_parentheses("(3+3/2*3/3"));
+    assert_eq!(false, count_valid_parentheses("3+3/2*3)/3"));
+    assert_eq!(false, count_valid_parentheses("3+3)/2*3)/3"));
+    assert_eq!(true, count_valid_parentheses("3+3/2*3/3"));
+    assert_eq!(true, count_valid_parentheses("(((er43r((fs((3+3)/2*3)/3)))sfe))66yr"));
+}
+
+#[test]
+fn test_check_expr_syntax() {
+    assert_eq!(true, check_expr_syntax("(((32+6)+2*5)-8)/2"));
+    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2(3+2)"));
+    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/joe(3+2)"));
+    assert_eq!(false, check_expr_syntax("(((+32+6)+2*5)-8)/2"));
+    assert_eq!(false, check_expr_syntax("(((32+6)>+2*5)-8)/2"));
+    assert_eq!(false, check_expr_syntax("(((32+6)++2*5)-8)/2"));
+    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2<<8"));
+    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2=>9"));
+    assert_eq!(false, check_expr_syntax("(((32+6)+2*5)-8)/2=+"));
+    assert_eq!(true, check_expr_syntax("(((32+6)+2*5)-8)/2=="));
+    assert_eq!(true, check_expr_syntax("9"));
+    assert_eq!(true, check_expr_syntax("a"))
+}
+
+#[test]
+fn test_valid_expression_str() {
+    let regex_pat: &Regex = &Regex::new(r"^[a-z 0-9+\-*/()=<>]*$").unwrap();
+    assert_eq!(true, valid_expression_str("(((32+6)+2*5)-8)/2", regex_pat));
+    assert_eq!(false, valid_expression_str("adrw34w4", regex_pat));
+    assert_eq!(false, valid_expression_str("(", regex_pat));
+    assert_eq!(false, valid_expression_str("((+2*5)-8)/2", regex_pat));
+    assert_eq!(false, valid_expression_str("((()+2*5)-8)/2", regex_pat));
+    assert_eq!(false, valid_expression_str("", regex_pat));
+    assert_eq!(false, valid_expression_str("+(((32+6)+2*5)-8)/2", regex_pat));
+    assert_eq!(false, valid_expression_str("(((32+6)+2*5)-8)/2l", regex_pat));
+    assert_eq!(true, valid_expression_str("kkkkkkkkkkkk", regex_pat));
+    assert_eq!(true, valid_expression_str("joe+3", regex_pat));
+    assert_eq!(true, valid_expression_str("(joe+3)", regex_pat));
+    assert_eq!(true, valid_expression_str("3*joe+90+e4", regex_pat));
+    assert_eq!(true, valid_expression_str("3", regex_pat));
+}
